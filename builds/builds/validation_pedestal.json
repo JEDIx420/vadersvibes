@@ -1,0 +1,34 @@
+{
+ "name": "validation_pedestal",
+ "width": 16,
+ "depth": 16,
+ "pieces": [
+  {
+   "id": 1,
+   "part": "brick_2x4",
+   "x": 4,
+   "y": 4,
+   "z": 0,
+   "rotation": 0,
+   "color": "dark_gray"
+  },
+  {
+   "id": 2,
+   "part": "slope_2x2",
+   "x": 4,
+   "y": 4,
+   "z": 3,
+   "rotation": 0,
+   "color": "green"
+  },
+  {
+   "id": 3,
+   "part": "slope_2x2",
+   "x": 4,
+   "y": 6,
+   "z": 3,
+   "rotation": 180,
+   "color": "green"
+  }
+ ]
+}

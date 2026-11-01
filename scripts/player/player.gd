@@ -1,0 +1,350 @@
+extends CharacterBody3D
+class_name VaderPlayer
+
+@export var walk_speed: float = 5.0
+@export var sprint_speed: float = 8.5
+@export var jump_velocity: float = 6.0
+@export var rotation_speed: float = 12.0
+
+@onready var animation_player: AnimationPlayer = $vader_rigged/AnimationPlayer if has_node("vader_rigged/AnimationPlayer") else null
+@onready var state_machine: PlayerStateMachine = $PlayerStateMachine
+@onready var guitar_player: GuitarAudioPlayer = $GuitarAudioPlayer
+@onready var sfx_player: AudioStreamPlayer3D = $SFXPlayer
+@onready var clean_hud: CleanHUD = $CleanHUD if has_node("CleanHUD") else null
+
+# Dynamic equipment nodes
+@onready var hand_lightsaber: Node3D = $EquipmentHand/LightsaberHand
+@onready var hand_guitar: Node3D = $EquipmentHand/GuitarHand
+@onready var hip_lightsaber: Node3D = $EquipmentHip/LightsaberHip
+@onready var back_guitar: Node3D = $EquipmentBack/GuitarBack
+
+var gravity: float = 14.0
+var is_lightsaber_drawn: bool = false
+var is_holding_guitar: bool = false
+var is_fishing: bool = false
+var current_vehicle: Node3D = null
+
+func _ready() -> void:
+	add_to_group("player")
+	if state_machine:
+		state_machine.init(self)
+	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	_setup_bone_attachments()
+	_update_equipment_visuals()
+	_play_anim("Idle_Casual")
+
+func _setup_bone_attachments() -> void:
+	var skeleton: Skeleton3D = get_node_or_null("vader_rigged/Armature_Vader/Skeleton3D")
+	if not skeleton:
+		return
+		
+	# 1. Lightsaber Hand Socket
+	var bone_hand_r = skeleton.find_bone("Socket_Hand_R")
+	if bone_hand_r != -1 and hand_lightsaber:
+		var attach_hand = BoneAttachment3D.new()
+		attach_hand.name = "AttachHandR"
+		attach_hand.bone_name = "Socket_Hand_R"
+		skeleton.add_child(attach_hand)
+		hand_lightsaber.reparent(attach_hand)
+		hand_lightsaber.position = Vector3(0, 0, 0)
+		hand_lightsaber.rotation = Vector3(0, 0, 0)
+		hand_lightsaber.scale = Vector3(1.0, 1.0, 1.0)
+		
+	# 2. Lightsaber Hip Holster Socket (vertical sleek clip at left belt)
+	var bone_hips = skeleton.find_bone("Hips")
+	if bone_hips != -1 and hip_lightsaber:
+		var attach_hips = BoneAttachment3D.new()
+		attach_hips.name = "AttachHips"
+		attach_hips.bone_name = "Hips"
+		skeleton.add_child(attach_hips)
+		hip_lightsaber.reparent(attach_hips)
+		hip_lightsaber.position = Vector3(-0.25, -0.05, 0.0)
+		hip_lightsaber.rotation = Vector3(0, 0, deg_to_rad(5))
+		hip_lightsaber.scale = Vector3(1.0, 1.0, 1.0)
+		
+	# 3. Acoustic Guitar Back Socket (slung diagonally across back)
+	var bone_back = skeleton.find_bone("Socket_Back")
+	if bone_back != -1 and back_guitar:
+		var attach_back = BoneAttachment3D.new()
+		attach_back.name = "AttachBack"
+		attach_back.bone_name = "Socket_Back"
+		skeleton.add_child(attach_back)
+		back_guitar.reparent(attach_back)
+		back_guitar.position = Vector3(0.0, 0.0, 0.22)
+		back_guitar.rotation = Vector3(0, 0, deg_to_rad(-45))
+		back_guitar.scale = Vector3(1.0, 1.0, 1.0)
+		
+	# 4. Acoustic Guitar Hand (Equipped across chest for strumming)
+	var bone_torso = skeleton.find_bone("Torso")
+	if bone_torso != -1 and hand_guitar:
+		var attach_guitar = BoneAttachment3D.new()
+		attach_guitar.name = "AttachGuitarTorso"
+		attach_guitar.bone_name = "Torso"
+		skeleton.add_child(attach_guitar)
+		hand_guitar.reparent(attach_guitar)
+		hand_guitar.position = Vector3(0.0, -0.05, -0.32)
+		hand_guitar.rotation = Vector3(deg_to_rad(15), deg_to_rad(180), deg_to_rad(-25))
+		hand_guitar.scale = Vector3(1.0, 1.0, 1.0)
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel") or (event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE):
+		if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
+			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+		else:
+			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+			
+	# Weapon / Prop Switching
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_F:
+			_toggle_lightsaber()
+		elif event.keycode == KEY_G:
+			_toggle_guitar()
+		elif event.keycode == KEY_0:
+			_holster_all()
+		elif event.keycode == KEY_C:
+			_try_fishing()
+			
+	# Guitar strumming on keys 1-6 when guitar is active
+	if is_holding_guitar:
+		if event is InputEventKey and event.pressed and not event.echo:
+			if event.keycode >= KEY_1 and event.keycode <= KEY_6:
+				play_guitar_chord(event.keycode - KEY_1)
+				
+	# Context interaction (Mount vehicle / talk to neighbors)
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_E:
+		_check_context_interaction()
+
+func _physics_process(delta: float) -> void:
+	if not is_inside_tree():
+		return
+		
+	# Infinite void protection / kill plane
+	if global_position.y < -5.0:
+		global_position = Vector3(0.0, 1.0, 0.0)
+		velocity = Vector3.ZERO
+		
+	if state_machine and state_machine.current_state == PlayerStateMachine.State.RIDING_BIKE:
+		_process_riding_vehicle(delta, "Bike_Ride_Pose")
+		if clean_hud:
+			clean_hud.show_interaction_prompt("[WASD] Steer Speeder | [Shift] Repulsor Boost | [L-Click] Blasters | [E] Dismount")
+		return
+	elif state_machine and state_machine.current_state == PlayerStateMachine.State.SPACE_FLIGHT:
+		_process_riding_vehicle(delta, "Bike_Ride_Pose")
+		if clean_hud:
+			clean_hud.show_interaction_prompt("[WASD] Pitch & Yaw | [Space] Thrusters | [E near ground] Land")
+		return
+	elif state_machine and state_machine.current_state == PlayerStateMachine.State.BOATING:
+		_process_riding_vehicle(delta, "Idle_Casual")
+		if clean_hud:
+			clean_hud.show_interaction_prompt("[WASD] Cruise Waters | [E] Disembark Skiff")
+		return
+
+	_process_on_foot(delta)
+	_update_proximity_hud()
+
+func _process_on_foot(delta: float) -> void:
+	if not is_on_floor():
+		velocity.y -= gravity * delta
+	else:
+		if velocity.y < 0:
+			velocity.y = -0.1
+			
+	var jump_pressed = Input.is_key_pressed(KEY_SPACE) or Input.is_physical_key_pressed(KEY_SPACE) or Input.is_action_just_pressed("jump")
+	if jump_pressed and is_on_floor():
+		velocity.y = jump_velocity
+		
+	var input_x = 0.0
+	var input_z = 0.0
+	
+	if Input.is_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_W) or Input.is_action_pressed("move_forward"):
+		input_z += 1.0
+	if Input.is_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_S) or Input.is_action_pressed("move_backward"):
+		input_z -= 1.0
+	if Input.is_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_D) or Input.is_action_pressed("move_right"):
+		input_x += 1.0
+	if Input.is_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_A) or Input.is_action_pressed("move_left"):
+		input_x -= 1.0
+		
+	var cam = get_viewport().get_camera_3d() if (is_inside_tree() and get_viewport()) else null
+	var move_dir = Vector3.ZERO
+	if cam:
+		var cam_forward = -cam.global_transform.basis.z
+		cam_forward.y = 0.0
+		cam_forward = cam_forward.normalized()
+		var cam_right = cam.global_transform.basis.x
+		cam_right.y = 0.0
+		cam_right = cam_right.normalized()
+		move_dir = (cam_right * input_x + cam_forward * input_z).normalized()
+	else:
+		move_dir = Vector3(input_x, 0, -input_z).normalized()
+		
+	var is_sprinting = Input.is_key_pressed(KEY_SHIFT) or Input.is_physical_key_pressed(KEY_SHIFT)
+	var current_speed = sprint_speed if is_sprinting else walk_speed
+	
+	if move_dir.length() > 0.1:
+		velocity.x = move_dir.x * current_speed
+		velocity.z = move_dir.z * current_speed
+		
+		var target_yaw = atan2(-move_dir.x, -move_dir.z)
+		rotation.y = lerp_angle(rotation.y, target_yaw, rotation_speed * delta)
+		
+		if is_on_floor() and not is_holding_guitar:
+			_play_anim("Walk_Minifig")
+	else:
+		velocity.x = move_toward(velocity.x, 0, current_speed * 4.0 * delta)
+		velocity.z = move_toward(velocity.z, 0, current_speed * 4.0 * delta)
+		if is_on_floor() and not is_holding_guitar:
+			_play_anim("Idle_Casual")
+			
+	move_and_slide()
+
+func _update_proximity_hud() -> void:
+	if not clean_hud:
+		return
+		
+	var vehicles = get_tree().get_nodes_in_group("vehicles") if (is_inside_tree() and get_tree()) else []
+	for v in vehicles:
+		if global_position.distance_to(v.global_position) < 3.8:
+			clean_hud.show_interaction_prompt("[E] Mount 74-Z Speeder Bike")
+			return
+			
+	var boats = get_tree().get_nodes_in_group("boats") if (is_inside_tree() and get_tree()) else []
+	for b in boats:
+		if global_position.distance_to(b.global_position) < 4.5:
+			clean_hud.show_interaction_prompt("[E] Board Coastal Skiff")
+			return
+			
+	var ships = get_tree().get_nodes_in_group("spacecraft") if (is_inside_tree() and get_tree()) else []
+	for s in ships:
+		if global_position.distance_to(s.global_position) < 6.0:
+			clean_hud.show_interaction_prompt("[E] Pilot Starship Shuttle")
+			return
+			
+	# Check if near coastline/dock for fishing
+	if global_position.x < -30.0 and global_position.y < 2.5:
+		clean_hud.show_interaction_prompt("[C] Cast Fishing Line into Crystal Waters")
+		return
+		
+	clean_hud.hide_interaction_prompt()
+
+func _process_riding_vehicle(_delta: float, pose_anim: String) -> void:
+	if current_vehicle:
+		global_position = current_vehicle.global_position
+		global_rotation = current_vehicle.global_rotation
+		_play_anim(pose_anim)
+
+func _check_context_interaction() -> void:
+	# Find nearest vehicle within 4.0m
+	var vehicles = get_tree().get_nodes_in_group("vehicles") if (is_inside_tree() and get_tree()) else []
+	for v in vehicles:
+		if global_position.distance_to(v.global_position) < 4.0:
+			if v.has_method("mount"):
+				v.mount(self)
+				return
+				
+	var boats = get_tree().get_nodes_in_group("boats") if (is_inside_tree() and get_tree()) else []
+	for b in boats:
+		if global_position.distance_to(b.global_position) < 4.5:
+			if b.has_method("board_boat"):
+				b.board_boat(self)
+				return
+				
+	var ships = get_tree().get_nodes_in_group("spacecraft") if (is_inside_tree() and get_tree()) else []
+	for s in ships:
+		if global_position.distance_to(s.global_position) < 6.0:
+			if s.has_method("board_ship"):
+				s.board_ship(self)
+				return
+
+func _try_fishing() -> void:
+	if global_position.x < -25.0:
+		_play_sfx("res://assets/audio/sfx/fishing_cast.wav")
+		print("[Vader] Cast fishing line into Pelagia-Prime ocean...")
+		if clean_hud:
+			clean_hud.show_interaction_prompt("🎣 You caught a shimmering Pelagian Bluefin Fish!")
+		var timer = get_tree().create_timer(2.5)
+		timer.timeout.connect(func():
+			if clean_hud:
+				clean_hud.hide_interaction_prompt()
+		)
+	else:
+		print("[Vader] Head to the coastal docks to cast your fishing line!")
+
+func _toggle_lightsaber() -> void:
+	is_lightsaber_drawn = !is_lightsaber_drawn
+	is_holding_guitar = false
+	_update_equipment_visuals()
+	
+	if is_lightsaber_drawn:
+		_play_anim("Combat_Flourish")
+		_play_sfx("res://assets/audio/sfx/lightsaber_ignite.wav")
+		print("[Vader] Drawn crimson lightsaber. Hands armed. Press F to holster.")
+		if is_inside_tree() and get_tree():
+			var creatures = get_tree().get_nodes_in_group("creatures")
+			for c in creatures:
+				if c is CreatureBase and global_position.distance_to(c.global_position) < 7.0:
+					c.pacify_creature()
+					_play_sfx("res://assets/audio/sfx/lego_snap.wav")
+					if clean_hud:
+						clean_hud.show_interaction_prompt("✨ Wild %s Pacified Non-Lethally with Lightsaber!" % c.creature_name)
+	else:
+		_play_anim("Idle_Casual")
+		print("[Vader] Holstered lightsaber. Hands free.")
+
+func _toggle_guitar() -> void:
+	is_holding_guitar = !is_holding_guitar
+	is_lightsaber_drawn = false
+	_update_equipment_visuals()
+	
+	if is_holding_guitar:
+		if state_machine:
+			state_machine.transition_to(PlayerStateMachine.State.PLAYING_GUITAR)
+		_play_anim("Guitar_Strum_Pose")
+		print("[Vader] Equipped acoustic guitar. Press 1-6 to strum chords, G to holster.")
+	else:
+		if state_machine:
+			state_machine.transition_to(PlayerStateMachine.State.ON_FOOT)
+		_play_anim("Idle_Casual")
+		print("[Vader] Holstered acoustic guitar to back. Hands free.")
+
+func _holster_all() -> void:
+	is_lightsaber_drawn = false
+	is_holding_guitar = false
+	_update_equipment_visuals()
+	if state_machine:
+		state_machine.transition_to(PlayerStateMachine.State.ON_FOOT)
+	_play_anim("Idle_Casual")
+	print("[Vader] Holstered all gear. Hands free.")
+
+func _update_equipment_visuals() -> void:
+	if hand_lightsaber:
+		hand_lightsaber.visible = is_lightsaber_drawn
+	if hip_lightsaber:
+		hip_lightsaber.visible = !is_lightsaber_drawn
+		
+	if hand_guitar:
+		hand_guitar.visible = is_holding_guitar
+	if back_guitar:
+		back_guitar.visible = !is_holding_guitar
+		
+	if clean_hud:
+		clean_hud.update_gear_display(is_lightsaber_drawn, is_holding_guitar)
+
+func play_guitar_chord(chord_idx: int) -> void:
+	if guitar_player:
+		guitar_player.play_chord_index(chord_idx)
+	if animation_player and animation_player.has_animation("Guitar_Strum_Pose"):
+		animation_player.seek(0.15, true)
+		animation_player.play("Guitar_Strum_Pose")
+
+func _play_anim(anim_name: String) -> void:
+	if animation_player and animation_player.has_animation(anim_name):
+		if animation_player.current_animation != anim_name:
+			animation_player.play(anim_name)
+
+func _play_sfx(path: String) -> void:
+	if sfx_player:
+		var stream = load(path)
+		if stream:
+			sfx_player.stream = stream
+			sfx_player.play()

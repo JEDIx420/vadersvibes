@@ -1,0 +1,356 @@
+[gd_scene load_steps=38 format=3 uid="uid://dworld001open"]
+
+[ext_resource type="Script" path="res://scenes/world/world.gd" id="1_world"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="2_player"]
+[ext_resource type="Script" path="res://scripts/environment/day_night_cycle.gd" id="3_daynight"]
+[ext_resource type="Script" path="res://scripts/environment/orbital_barrier.gd" id="4_barrier"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/speeder_bike.tscn" id="5_bike"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/skiff_boat.tscn" id="6_boat"]
+[ext_resource type="PackedScene" path="res://scenes/vehicles/starship_shuttle.tscn" id="7_ship"]
+[ext_resource type="Script" path="res://scripts/fauna/creature_base.gd" id="8_fauna"]
+[ext_resource type="Script" path="res://scripts/interactions/village_defense_event.gd" id="9_defense"]
+[ext_resource type="PackedScene" path="res://assets/props/furniture/bedDouble.glb" id="10_bed"]
+[ext_resource type="PackedScene" path="res://assets/props/furniture/desk.glb" id="11_desk"]
+[ext_resource type="PackedScene" path="res://assets/props/furniture/chair.glb" id="12_chair"]
+[ext_resource type="PackedScene" path="res://assets/props/furniture/bookcaseClosed.glb" id="13_book"]
+[ext_resource type="PackedScene" path="res://assets/props/furniture/loungeChair.glb" id="14_armchair"]
+[ext_resource type="PackedScene" path="res://assets/props/furniture/lampRoundFloor.glb" id="15_lamp"]
+[ext_resource type="PackedScene" path="res://assets/props/furniture/coatRackStanding.glb" id="16_coat"]
+[ext_resource type="PackedScene" path="res://assets/props/village/naboo_greenhouse.glb" id="17_greenhouse"]
+[ext_resource type="PackedScene" path="res://assets/props/village/gonk_cooler_droid.glb" id="18_gonk"]
+[ext_resource type="PackedScene" path="res://assets/props/nature/campfire.glb" id="19_fire"]
+[ext_resource type="PackedScene" path="res://assets/props/nature/tree_detailed.glb" id="20_tree"]
+[ext_resource type="PackedScene" path="res://assets/props/nature/rock_cliff.glb" id="21_rock"]
+[ext_resource type="PackedScene" path="res://assets/props/docks/barrel.glb" id="22_barrel"]
+[ext_resource type="PackedScene" path="res://assets/props/docks/crate.glb" id="23_crate"]
+[ext_resource type="PackedScene" path="res://assets/characters/fauna/creature_massiff.glb" id="24_massiff"]
+[ext_resource type="PackedScene" path="res://assets/characters/fauna/creature_lothwolf.glb" id="25_lothwolf"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/creature_growl.wav" id="26_growl"]
+
+[sub_resource type="ProceduralSkyMaterial" id="SkyMat_pelagia"]
+sky_top_color = Color(0.18, 0.44, 0.86, 1)
+sky_horizon_color = Color(0.72, 0.78, 0.88, 1)
+ground_bottom_color = Color(0.12, 0.28, 0.16, 1)
+ground_horizon_color = Color(0.72, 0.78, 0.88, 1)
+
+[sub_resource type="Sky" id="Sky_open"]
+sky_material = SubResource("SkyMat_pelagia")
+
+[sub_resource type="Environment" id="Environment_open"]
+background_mode = 2
+sky = SubResource("Sky_open")
+ambient_light_source = 3
+ambient_light_color = Color(0.68, 0.74, 0.84, 1)
+ambient_light_energy = 0.9
+tonemap_mode = 2
+glow_enabled = true
+glow_intensity = 0.4
+glow_bloom = 0.2
+
+[sub_resource type="BoxMesh" id="BoxMesh_ground_mesh"]
+size = Vector3(300, 2.0, 300)
+
+[sub_resource type="StandardMaterial3D" id="Mat_ground_lego"]
+albedo_color = Color(0.2, 0.48, 0.18, 1)
+roughness = 0.5
+
+[sub_resource type="BoxShape3D" id="BoxShape_ground_col"]
+size = Vector3(300, 2.0, 300)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_ocean_mesh"]
+size = Vector2(160, 280)
+
+[sub_resource type="StandardMaterial3D" id="Mat_ocean_water"]
+transparency = 1
+albedo_color = Color(0.06, 0.38, 0.68, 0.88)
+roughness = 0.08
+
+[sub_resource type="BoxMesh" id="BoxMesh_cottage_floor"]
+size = Vector3(14, 0.5, 12)
+
+[sub_resource type="StandardMaterial3D" id="Mat_cottage_floor"]
+albedo_color = Color(0.38, 0.28, 0.2, 1)
+roughness = 0.4
+
+[sub_resource type="BoxShape3D" id="BoxShape_cottage_floor"]
+size = Vector3(14, 0.5, 12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall_back"]
+size = Vector3(14, 3.8, 0.5)
+
+[sub_resource type="StandardMaterial3D" id="Mat_wall_stone"]
+albedo_color = Color(0.55, 0.58, 0.62, 1)
+roughness = 0.6
+
+[sub_resource type="BoxShape3D" id="BoxShape_wall_back"]
+size = Vector3(14, 3.8, 0.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall_side"]
+size = Vector3(0.5, 3.8, 12)
+
+[sub_resource type="BoxShape3D" id="BoxShape_wall_side"]
+size = Vector3(0.5, 3.8, 12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_landing_pad"]
+size = Vector3(10, 0.4, 10)
+
+[sub_resource type="StandardMaterial3D" id="Mat_landing_pad"]
+albedo_color = Color(0.24, 0.26, 0.3, 1)
+metallic = 0.2
+roughness = 0.5
+
+[sub_resource type="BoxShape3D" id="BoxShape_landing_pad"]
+size = Vector3(10, 0.4, 10)
+
+[sub_resource type="BoxMesh" id="BoxMesh_pier"]
+size = Vector3(6, 0.3, 22)
+
+[sub_resource type="StandardMaterial3D" id="Mat_pier"]
+albedo_color = Color(0.42, 0.32, 0.22, 1)
+roughness = 0.6
+
+[sub_resource type="BoxShape3D" id="BoxShape_pier"]
+size = Vector3(6, 0.3, 22)
+
+[sub_resource type="BoxShape3D" id="BoxShape_creature_col"]
+size = Vector3(1.2, 1.2, 2.0)
+
+[node name="World" type="Node3D"]
+script = ExtResource("1_world")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_open")
+
+[node name="SunLight" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866025, -0.353553, 0.353553, 0, 0.707107, 0.707107, -0.5, -0.612372, 0.612372, 0, 60, 0)
+shadow_enabled = true
+
+[node name="DayNightCycle" type="Node3D" parent="." node_paths=PackedStringArray("sun_light", "world_environment")]
+script = ExtResource("3_daynight")
+sun_light = NodePath("../SunLight")
+world_environment = NodePath("../WorldEnvironment")
+
+[node name="TerrainGround" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.0, 0)
+collision_layer = 1
+collision_mask = 7
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="TerrainGround"]
+mesh = SubResource("BoxMesh_ground_mesh")
+surface_material_override/0 = SubResource("Mat_ground_lego")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TerrainGround"]
+shape = SubResource("BoxShape_ground_col")
+
+[node name="OceanWater" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -95, 0.1, 0)
+mesh = SubResource("PlaneMesh_ocean_mesh")
+surface_material_override/0 = SubResource("Mat_ocean_water")
+
+[node name="VadersSanctuaryCottage" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, -6)
+
+[node name="CottageFloor" type="StaticBody3D" parent="VadersSanctuaryCottage"]
+collision_layer = 1
+collision_mask = 3
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="VadersSanctuaryCottage/CottageFloor"]
+mesh = SubResource("BoxMesh_cottage_floor")
+surface_material_override/0 = SubResource("Mat_cottage_floor")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="VadersSanctuaryCottage/CottageFloor"]
+shape = SubResource("BoxShape_cottage_floor")
+
+[node name="WallBack" type="StaticBody3D" parent="VadersSanctuaryCottage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9, -6)
+collision_layer = 1
+collision_mask = 3
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="VadersSanctuaryCottage/WallBack"]
+mesh = SubResource("BoxMesh_wall_back")
+surface_material_override/0 = SubResource("Mat_wall_stone")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="VadersSanctuaryCottage/WallBack"]
+shape = SubResource("BoxShape_wall_back")
+
+[node name="WallLeft" type="StaticBody3D" parent="VadersSanctuaryCottage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 1.9, 0)
+collision_layer = 1
+collision_mask = 3
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="VadersSanctuaryCottage/WallLeft"]
+mesh = SubResource("BoxMesh_wall_side")
+surface_material_override/0 = SubResource("Mat_wall_stone")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="VadersSanctuaryCottage/WallLeft"]
+shape = SubResource("BoxShape_wall_side")
+
+[node name="WallRight" type="StaticBody3D" parent="VadersSanctuaryCottage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 1.9, 0)
+collision_layer = 1
+collision_mask = 3
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="VadersSanctuaryCottage/WallRight"]
+mesh = SubResource("BoxMesh_wall_side")
+surface_material_override/0 = SubResource("Mat_wall_stone")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="VadersSanctuaryCottage/WallRight"]
+shape = SubResource("BoxShape_wall_side")
+
+[node name="WarmIndoorLight" type="OmniLight3D" parent="VadersSanctuaryCottage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, -2)
+light_color = Color(1, 0.88, 0.65, 1)
+light_energy = 2.0
+omni_range = 10.0
+
+[node name="bedDouble" parent="VadersSanctuaryCottage" instance=ExtResource("10_bed")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.8, 0.25, -4.2)
+
+[node name="desk" parent="VadersSanctuaryCottage" instance=ExtResource("11_desk")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -4.5, 0.25, -4.0)
+
+[node name="chair" parent="VadersSanctuaryCottage" instance=ExtResource("12_chair")]
+transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, -3.5, 0.25, -4.0)
+
+[node name="bookcaseClosed" parent="VadersSanctuaryCottage" instance=ExtResource("13_book")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 0.25, -5.5)
+
+[node name="loungeChair" parent="VadersSanctuaryCottage" instance=ExtResource("14_armchair")]
+transform = Transform3D(0.866025, 0, -0.5, 0, 1, 0, 0.5, 0, 0.866025, 4.2, 0.25, -1.5)
+
+[node name="lampRoundFloor" parent="VadersSanctuaryCottage" instance=ExtResource("15_lamp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0.25, -5.2)
+
+[node name="coatRackStanding" parent="VadersSanctuaryCottage" instance=ExtResource("16_coat")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.5, 0.25, -1.8)
+
+[node name="LandingPad" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 5.5)
+collision_layer = 1
+collision_mask = 7
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="LandingPad"]
+mesh = SubResource("BoxMesh_landing_pad")
+surface_material_override/0 = SubResource("Mat_landing_pad")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="LandingPad"]
+shape = SubResource("BoxShape_landing_pad")
+
+[node name="SpeederBike" parent="." instance=ExtResource("5_bike")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 5.5)
+
+[node name="VaderPlayer" parent="." instance=ExtResource("2_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.8, -4.5)
+
+[node name="CoastalPier" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -45, 0.25, 0)
+collision_layer = 1
+collision_mask = 7
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="CoastalPier"]
+mesh = SubResource("BoxMesh_pier")
+surface_material_override/0 = SubResource("Mat_pier")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CoastalPier"]
+shape = SubResource("BoxShape_pier")
+
+[node name="barrel1" parent="CoastalPier" instance=ExtResource("22_barrel")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 0.15, -4.0)
+
+[node name="crate1" parent="CoastalPier" instance=ExtResource("23_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 0.15, -2.5)
+
+[node name="SkiffBoat" parent="." instance=ExtResource("6_boat")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -50, 0.3, 0)
+
+[node name="VillageSanctuary" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 0, 8)
+
+[node name="campfire" parent="VillageSanctuary" instance=ExtResource("19_fire")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="naboo_greenhouse" parent="VillageSanctuary" instance=ExtResource("17_greenhouse")]
+transform = Transform3D(1.2, 0, 0, 0, 1.2, 0, 0, 0, 1.2, 8, 0, -6)
+
+[node name="gonk_cooler_droid" parent="VillageSanctuary" instance=ExtResource("18_gonk")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, 3)
+
+[node name="tree1" parent="VillageSanctuary" instance=ExtResource("20_tree")]
+transform = Transform3D(1.2, 0, 0, 0, 1.2, 0, 0, 0, 1.2, -6, 0, -8)
+
+[node name="tree2" parent="VillageSanctuary" instance=ExtResource("20_tree")]
+transform = Transform3D(1.4, 0, 0, 0, 1.4, 0, 0, 0, 1.4, 12, 0, 5)
+
+[node name="SavannahWilderness" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, 35)
+
+[node name="rock_cliff" parent="SavannahWilderness" instance=ExtResource("21_rock")]
+transform = Transform3D(1.5, 0, 0, 0, 1.5, 0, 0, 0, 1.5, 8, 0, 0)
+
+[node name="tree3" parent="SavannahWilderness" instance=ExtResource("20_tree")]
+transform = Transform3D(1.3, 0, 0, 0, 1.3, 0, 0, 0, 1.3, -12, 0, 5)
+
+[node name="Creature_Massiff" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0.5, 25)
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("8_fauna")
+creature_name = "Dune Massiff"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Creature_Massiff"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+shape = SubResource("BoxShape_creature_col")
+
+[node name="creature_massiff_mesh" parent="Creature_Massiff" instance=ExtResource("24_massiff")]
+
+[node name="GrowlSound" type="AudioStreamPlayer3D" parent="Creature_Massiff"]
+stream = ExtResource("26_growl")
+volume_db = -3.0
+max_distance = 25.0
+
+[node name="ForestGrove" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0, 32)
+
+[node name="tree_f1" parent="ForestGrove" instance=ExtResource("20_tree")]
+transform = Transform3D(1.5, 0, 0, 0, 1.5, 0, 0, 0, 1.5, -4, 0, -4)
+
+[node name="tree_f2" parent="ForestGrove" instance=ExtResource("20_tree")]
+transform = Transform3D(1.3, 0, 0, 0, 1.3, 0, 0, 0, 1.3, 4, 0, 3)
+
+[node name="tree_f3" parent="ForestGrove" instance=ExtResource("20_tree")]
+transform = Transform3D(1.4, 0, 0, 0, 1.4, 0, 0, 0, 1.4, 0, 0, 6)
+
+[node name="Creature_LothWolf" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0.5, 34)
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("8_fauna")
+creature_type = 1
+creature_name = "Loth Wolf"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Creature_LothWolf"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+shape = SubResource("BoxShape_creature_col")
+
+[node name="creature_lothwolf_mesh" parent="Creature_LothWolf" instance=ExtResource("25_lothwolf")]
+
+[node name="GrowlSound" type="AudioStreamPlayer3D" parent="Creature_LothWolf"]
+stream = ExtResource("26_growl")
+volume_db = -3.0
+max_distance = 25.0
+
+[node name="MountainPlateau" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 55, 0, -35)
+
+[node name="StarshipShuttle" parent="MountainPlateau" instance=ExtResource("7_ship")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+
+[node name="OrbitalBarrier" type="Area3D" parent="."]
+script = ExtResource("4_barrier")
+
+[node name="VillageDefenseEvent" type="Node" parent="."]
+script = ExtResource("9_defense")
+
+[node name="BGMPlayer" type="AudioStreamPlayer" parent="."]
+volume_db = -6.0
+autoplay = true

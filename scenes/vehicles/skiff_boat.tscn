@@ -1,0 +1,28 @@
+[gd_scene load_steps=5 format=3 uid="uid://bskiffboat001"]
+
+[ext_resource type="Script" path="res://scripts/vehicles/boat_controller.gd" id="1_boat"]
+[ext_resource type="PackedScene" path="res://assets/props/docks/boat_skiff.glb" id="2_mesh"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/water_splash.wav" id="3_splash"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_boat"]
+size = Vector3(1.8, 1.0, 3.8)
+
+[node name="SkiffBoat" type="CharacterBody3D"]
+collision_layer = 4
+collision_mask = 1
+script = ExtResource("1_boat")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("BoxShape3D_boat")
+
+[node name="boat_skiff" parent="." instance=ExtResource("2_mesh")]
+transform = Transform3D(1.2, 0, 0, 0, 1.2, 0, 0, 0, 1.2, 0, 0, 0)
+
+[node name="MountPoint" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+
+[node name="SplashSound" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("3_splash")
+volume_db = -2.0
+max_distance = 25.0

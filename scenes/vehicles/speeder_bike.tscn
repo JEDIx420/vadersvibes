@@ -1,0 +1,47 @@
+[gd_scene load_steps=6 format=3 uid="uid://bspeederbike74z"]
+
+[ext_resource type="Script" path="res://scripts/vehicles/speeder_bike_controller.gd" id="1_speeder"]
+[ext_resource type="PackedScene" path="res://assets/props/vehicles/speeder_bike_74z.glb" id="2_mesh"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/speeder_engine.wav" id="3_engine"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/blaster_fire.wav" id="4_blaster"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_speeder"]
+size = Vector3(0.9, 0.9, 2.6)
+
+[node name="SpeederBike" type="CharacterBody3D"]
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("1_speeder")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
+shape = SubResource("BoxShape3D_speeder")
+
+[node name="speeder_bike_74z" parent="." instance=ExtResource("2_mesh")]
+
+[node name="MountPoint" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+
+[node name="EngineSound" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("3_engine")
+volume_db = -4.0
+max_distance = 30.0
+
+[node name="BlasterSound" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("4_blaster")
+volume_db = 2.0
+max_distance = 40.0
+
+[node name="LaserFlashL" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3, 0.3, -1.5)
+visible = false
+light_color = Color(1, 0.1, 0.1, 1)
+light_energy = 5.0
+omni_range = 4.0
+
+[node name="LaserFlashR" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, 0.3, -1.5)
+visible = false
+light_color = Color(1, 0.1, 0.1, 1)
+light_energy = 5.0
+omni_range = 4.0

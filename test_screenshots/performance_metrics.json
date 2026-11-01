@@ -1,0 +1,15 @@
+{
+	"animation_verified": true,
+	"backend": "Forward+ (Metal 4.0)",
+	"collision_verified": true,
+	"draw_calls": 212,
+	"fps": 42.0,
+	"frame_time_ms": 23.8095238095238,
+	"hardware": "Apple Silicon M4 (16GB RAM)",
+	"legolized_monument_parts": 121,
+	"memory_peak_mb": 240.18,
+	"memory_static_mb": 234.03,
+	"objects_drawn": 575,
+	"primitives_drawn": 468768,
+	"resolution": "1280x720"
+}

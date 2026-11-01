@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://bw6ycc7ouc3a7"
+path="res://.godot/imported/tiny_cube.obj-e7b503fa8be57edbea7cceb175f64dfc.mesh"
+
+[deps]
+
+files=["res://.godot/imported/tiny_cube.obj-e7b503fa8be57edbea7cceb175f64dfc.mesh"]
+
+source_file="res://builds/input/tiny_cube.obj"
+dest_files=["res://.godot/imported/tiny_cube.obj-e7b503fa8be57edbea7cceb175f64dfc.mesh", "res://.godot/imported/tiny_cube.obj-e7b503fa8be57edbea7cceb175f64dfc.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

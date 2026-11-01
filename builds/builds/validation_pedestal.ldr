@@ -1,0 +1,7 @@
+0 validation_pedestal
+0 Name: validation_pedestal.ldr
+0 Author: lego-mcp
+0 BFC CERTIFY CCW
+1 72 100 -24 120 1 0 0 0 1 0 0 0 1 3001.dat
+1 2 100 -48 100 1 0 0 0 1 0 0 0 1 3039.dat
+1 2 100 -48 140 -1 0 0 0 1 0 0 0 -1 3039.dat
