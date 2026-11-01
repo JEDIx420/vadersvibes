@@ -9,3 +9,6 @@ Thumbs.db
 # Blender backups
 *.blend1
 *.blend2
+
+# Build exports
+build/
