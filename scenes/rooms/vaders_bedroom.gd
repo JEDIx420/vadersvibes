@@ -3,7 +3,7 @@ extends Node3D
 @onready var bgm_player: AudioStreamPlayer = $BGMPlayer
 
 func _ready() -> void:
-	var stream = load("res://assets/audio/music/lofi_binary_sunset_acoustic.wav")
+	var stream = load("res://assets/audio/music/star_wars_force_theme.mp3")
 	if stream and bgm_player:
 		bgm_player.stream = stream
 		bgm_player.play()

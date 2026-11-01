@@ -5,8 +5,8 @@ class_name MusicManager
 @onready var sfx_player: AudioStreamPlayer = AudioStreamPlayer.new()
 
 var tracks = {
-	"intro": "res://assets/audio/music/intro_crawl_fanfare.wav",
-	"peaceful": "res://assets/audio/music/lofi_binary_sunset_acoustic.wav"
+	"intro": "res://assets/audio/music/star_wars_main_theme.mp3",
+	"peaceful": "res://assets/audio/music/star_wars_force_theme.mp3"
 }
 
 func _ready() -> void:

@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3 uid="uid://runwalkworld01"]
+
+[ext_resource type="PackedScene" path="res://scenes/world/world.tscn" id="1_world"]
+[ext_resource type="Script" path="res://scripts/test/capture_walk_and_world_validation.gd" id="2_capt"]
+
+[node name="WorldRunner" instance=ExtResource("1_world")]
+
+[node name="CaptureScript" type="Node" parent="."]
+script = ExtResource("2_capt")

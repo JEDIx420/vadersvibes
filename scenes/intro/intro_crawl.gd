@@ -24,7 +24,7 @@ Here, in a tranquil haven of diverse biomes and eccentric LEGO friends, Vader ha
 func _ready() -> void:
 	if crawl_text_3d:
 		crawl_text_3d.text = crawl_story
-		crawl_text_3d.position.y = -4.0
+		crawl_text_3d.position.y = -0.5
 		crawl_text_3d.visible = false
 	if intro_blue_label:
 		intro_blue_label.visible = true
@@ -34,7 +34,7 @@ func _process(delta: float) -> void:
 	elapsed += delta
 	
 	if Input.is_key_pressed(KEY_SPACE) or Input.is_key_pressed(KEY_ENTER) or Input.is_action_just_pressed("ui_accept"):
-		transition_to_world()
+		transition_to_bedroom()
 		return
 		
 	if elapsed < 3.5:
@@ -51,7 +51,7 @@ func _process(delta: float) -> void:
 			has_started_fanfare = true
 			if crawl_text_3d:
 				crawl_text_3d.visible = true
-			var stream = load("res://assets/audio/music/intro_crawl_fanfare.wav")
+			var stream = load("res://assets/audio/music/star_wars_main_theme.mp3")
 			if stream and audio_player:
 				audio_player.stream = stream
 				audio_player.play()
@@ -59,14 +59,14 @@ func _process(delta: float) -> void:
 		if crawl_text_3d:
 			crawl_text_3d.position.y += crawl_speed * delta
 			
-		if elapsed > 24.0:
-			transition_to_world()
+		if elapsed > 28.0:
+			transition_to_bedroom()
 
-func transition_to_world() -> void:
+func transition_to_bedroom() -> void:
 	set_process(false)
 	var tween = create_tween()
 	if audio_player:
 		tween.tween_property(audio_player, "volume_db", -35.0, 0.8)
 	tween.tween_callback(func():
-		get_tree().change_scene_to_file("res://scenes/world/world.tscn")
+		get_tree().change_scene_to_file("res://scenes/rooms/vaders_bedroom.tscn")
 	)

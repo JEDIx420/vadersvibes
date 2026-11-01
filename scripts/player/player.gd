@@ -30,8 +30,19 @@ func _ready() -> void:
 		state_machine.init(self)
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	_setup_bone_attachments()
+	_configure_animation_loops()
 	_update_equipment_visuals()
 	_play_anim("Idle_Casual")
+
+func _configure_animation_loops() -> void:
+	if not animation_player:
+		return
+	var looping_anims = ["Idle_Casual", "Walk_Minifig", "Run_Minifig", "Guitar_Strum", "Bike_Ride_Pose"]
+	for a_name in looping_anims:
+		if animation_player.has_animation(a_name):
+			var anim = animation_player.get_animation(a_name)
+			if anim:
+				anim.loop_mode = Animation.LOOP_LINEAR
 
 func _setup_bone_attachments() -> void:
 	var skeleton: Skeleton3D = get_node_or_null("vader_rigged/Armature_Vader/Skeleton3D")
@@ -185,11 +196,16 @@ func _process_on_foot(delta: float) -> void:
 		velocity.x = move_dir.x * current_speed
 		velocity.z = move_dir.z * current_speed
 		
-		var target_yaw = atan2(-move_dir.x, -move_dir.z)
+		# Vader's model front faces +Z in local coordinates.
+		# To align +Z with move_dir, rotation.y is atan2(move_dir.x, move_dir.z)
+		var target_yaw = atan2(move_dir.x, move_dir.z)
 		rotation.y = lerp_angle(rotation.y, target_yaw, rotation_speed * delta)
 		
 		if is_on_floor() and not is_holding_guitar:
-			_play_anim("Walk_Minifig")
+			if is_sprinting:
+				_play_anim("Run_Minifig")
+			else:
+				_play_anim("Walk_Minifig")
 	else:
 		velocity.x = move_toward(velocity.x, 0, current_speed * 4.0 * delta)
 		velocity.z = move_toward(velocity.z, 0, current_speed * 4.0 * delta)
@@ -276,7 +292,7 @@ func _toggle_lightsaber() -> void:
 	_update_equipment_visuals()
 	
 	if is_lightsaber_drawn:
-		_play_anim("Combat_Flourish")
+		_play_anim("Lightsaber_Flourish")
 		_play_sfx("res://assets/audio/sfx/lightsaber_ignite.wav")
 		print("[Vader] Drawn crimson lightsaber. Hands armed. Press F to holster.")
 		if is_inside_tree() and get_tree():
@@ -299,7 +315,7 @@ func _toggle_guitar() -> void:
 	if is_holding_guitar:
 		if state_machine:
 			state_machine.transition_to(PlayerStateMachine.State.PLAYING_GUITAR)
-		_play_anim("Guitar_Strum_Pose")
+		_play_anim("Guitar_Strum")
 		print("[Vader] Equipped acoustic guitar. Press 1-6 to strum chords, G to holster.")
 	else:
 		if state_machine:
@@ -333,9 +349,9 @@ func _update_equipment_visuals() -> void:
 func play_guitar_chord(chord_idx: int) -> void:
 	if guitar_player:
 		guitar_player.play_chord_index(chord_idx)
-	if animation_player and animation_player.has_animation("Guitar_Strum_Pose"):
-		animation_player.seek(0.15, true)
-		animation_player.play("Guitar_Strum_Pose")
+	if animation_player and animation_player.has_animation("Guitar_Strum"):
+		animation_player.seek(0.05, true)
+		animation_player.play("Guitar_Strum")
 
 func _play_anim(anim_name: String) -> void:
 	if animation_player and animation_player.has_animation(anim_name):
