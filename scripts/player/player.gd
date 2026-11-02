@@ -10,6 +10,7 @@ class_name VaderPlayer
 @onready var state_machine: PlayerStateMachine = $PlayerStateMachine
 @onready var guitar_player: GuitarAudioPlayer = $GuitarAudioPlayer
 @onready var sfx_player: AudioStreamPlayer3D = $SFXPlayer
+@onready var footstep_player: AudioStreamPlayer3D = $FootstepPlayer if has_node("FootstepPlayer") else null
 @onready var clean_hud: CleanHUD = $CleanHUD if has_node("CleanHUD") else null
 
 # Dynamic equipment nodes
@@ -24,6 +25,14 @@ var is_holding_guitar: bool = false
 var is_fishing: bool = false
 var current_vehicle: Node3D = null
 
+# Footstep sound system
+var footstep_distance_accumulator: float = 0.0
+const STEP_DISTANCE_WALK: float = 0.72
+const STEP_DISTANCE_RUN: float = 0.52
+var _footstep_sounds: Array[AudioStream] = []
+var _footstep_wood_sounds: Array[AudioStream] = []
+var _footstep_index: int = 0
+
 func _ready() -> void:
 	add_to_group("player")
 	if state_machine:
@@ -33,6 +42,16 @@ func _ready() -> void:
 	_configure_animation_loops()
 	_update_equipment_visuals()
 	_play_anim("Idle_Casual")
+	
+	# Preload footstep sounds for responsive instant playback
+	for i in range(1, 5):
+		var p = "res://assets/audio/sfx/lego_step_%d.wav" % i
+		if ResourceLoader.exists(p):
+			_footstep_sounds.append(load(p))
+	for i in range(1, 3):
+		var p = "res://assets/audio/sfx/lego_step_wood_%d.wav" % i
+		if ResourceLoader.exists(p):
+			_footstep_wood_sounds.append(load(p))
 
 func _configure_animation_loops() -> void:
 	if not animation_player:
@@ -81,9 +100,9 @@ func _setup_bone_attachments() -> void:
 		attach_back.bone_name = "Socket_Back"
 		skeleton.add_child(attach_back)
 		back_guitar.reparent(attach_back)
-		back_guitar.position = Vector3(0.0, 0.04, 0.25)
-		back_guitar.rotation = Vector3(deg_to_rad(8), deg_to_rad(180), deg_to_rad(-48))
-		back_guitar.scale = Vector3(1.2, 1.2, 1.2)
+		back_guitar.position = Vector3(0.04, 0.10, -0.48)
+		back_guitar.rotation = Vector3(deg_to_rad(6), deg_to_rad(180), deg_to_rad(-24))
+		back_guitar.scale = Vector3(1.15, 1.15, 1.15)
 		
 	# 4. Acoustic Guitar Hand (Equipped across chest for strumming)
 	var bone_torso = skeleton.find_bone("Torso")
@@ -93,9 +112,12 @@ func _setup_bone_attachments() -> void:
 		attach_guitar.bone_name = "Torso"
 		skeleton.add_child(attach_guitar)
 		hand_guitar.reparent(attach_guitar)
-		hand_guitar.position = Vector3(0.02, 0.10, 0.30)
-		hand_guitar.rotation = Vector3(deg_to_rad(10), 0, deg_to_rad(45))
-		hand_guitar.scale = Vector3(1.2, 1.2, 1.2)
+		hand_guitar.position = Vector3(0.02, 0.0, 0.30)
+		var b_x = Vector3(0.707, -0.707, 0.0)
+		var b_y = Vector3(0.0, 0.15, 0.988).normalized()
+		var b_z = b_x.cross(b_y).normalized()
+		hand_guitar.transform.basis = Basis(b_x, b_y, b_z).orthonormalized()
+		hand_guitar.scale = Vector3(1.15, 1.15, 1.15)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") or (event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE):
@@ -201,6 +223,15 @@ func _process_on_foot(delta: float) -> void:
 		var target_yaw = atan2(move_dir.x, move_dir.z)
 		rotation.y = lerp_angle(rotation.y, target_yaw, rotation_speed * delta)
 		
+		# Footstep sound calculation
+		if is_on_floor():
+			var horiz_vel = Vector2(velocity.x, velocity.z).length()
+			footstep_distance_accumulator += horiz_vel * delta
+			var threshold = STEP_DISTANCE_RUN if is_sprinting else STEP_DISTANCE_WALK
+			if footstep_distance_accumulator >= threshold:
+				footstep_distance_accumulator = 0.0
+				_play_footstep()
+				
 		if is_on_floor() and not is_holding_guitar:
 			if is_sprinting:
 				_play_anim("Run_Minifig")
@@ -209,10 +240,31 @@ func _process_on_foot(delta: float) -> void:
 	else:
 		velocity.x = move_toward(velocity.x, 0, current_speed * 4.0 * delta)
 		velocity.z = move_toward(velocity.z, 0, current_speed * 4.0 * delta)
+		footstep_distance_accumulator = 0.0
 		if is_on_floor() and not is_holding_guitar:
 			_play_anim("Idle_Casual")
 			
+	var was_in_air = !is_on_floor()
 	move_and_slide()
+	if was_in_air and is_on_floor() and velocity.y <= 0:
+		_play_footstep()
+
+func _play_footstep() -> void:
+	if not footstep_player:
+		return
+	var sounds = _footstep_sounds
+	# If on dock / pier or wooden veranda
+	if (global_position.x < -10.0 and global_position.z > 0.0) or (global_position.x > 0.0 and global_position.x < 5.0 and global_position.z < 0.0):
+		if not _footstep_wood_sounds.is_empty():
+			sounds = _footstep_wood_sounds
+	if sounds.is_empty():
+		return
+	var stream = sounds[_footstep_index % sounds.size()]
+	_footstep_index += 1
+	footstep_player.stream = stream
+	footstep_player.pitch_scale = randf_range(0.96, 1.04)
+	footstep_player.volume_db = 0.0
+	footstep_player.play()
 
 func _get_nearby_interactions() -> Array[Dictionary]:
 	var results: Array[Dictionary] = []

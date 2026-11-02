@@ -60,13 +60,13 @@ glow_bloom = 0.1
 size = Vector3(400, 2.0, 400)
 
 [sub_resource type="StandardMaterial3D" id="Mat_ground_lego"]
-albedo_color = Color(0.22, 0.52, 0.20, 1)
-roughness = 0.45
+albedo_color = Color(0.24, 0.48, 0.22, 1)
+roughness = 0.35
 roughness_texture = ExtResource("28_stud_rough")
 normal_enabled = true
-normal_scale = 1.2
+normal_scale = 0.65
 normal_texture = ExtResource("27_stud_norm")
-uv1_scale = Vector3(200, 200, 1)
+uv1_scale = Vector3(800, 800, 1)
 
 [sub_resource type="BoxShape3D" id="BoxShape_ground_col"]
 size = Vector3(400, 2.0, 400)

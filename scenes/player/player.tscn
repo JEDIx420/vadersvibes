@@ -73,4 +73,8 @@ script = ExtResource("5_guitar")
 
 [node name="SFXPlayer" type="AudioStreamPlayer3D" parent="."]
 
+[node name="FootstepPlayer" type="AudioStreamPlayer3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
+max_distance = 25.0
+
 [node name="CleanHUD" parent="." instance=ExtResource("9_hud")]

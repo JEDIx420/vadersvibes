@@ -29,13 +29,16 @@ func _process(delta: float) -> void:
 				player.rotation.y = deg_to_rad(180.0)
 				if not player.is_holding_guitar:
 					player._toggle_guitar() # equip guitar
-				player._play_anim("Idle_Casual")
+				player._play_anim("Guitar_Strum")
 				
-				# Adjust hand guitar directly in runner to find optimal framing
+				# Adjust hand guitar directly in runner with exact orthonormal basis
 				if player.hand_guitar:
-					player.hand_guitar.position = Vector3(0.02, 0.12, 0.30)
-					player.hand_guitar.rotation = Vector3(deg_to_rad(10), 0, deg_to_rad(55))
-					player.hand_guitar.scale = Vector3(1.2, 1.2, 1.2)
+					player.hand_guitar.position = Vector3(0.02, 0.0, 0.30)
+					var b_x = Vector3(0.707, -0.707, 0.0)
+					var b_y = Vector3(0.0, 0.15, 0.988).normalized()
+					var b_z = b_x.cross(b_y).normalized()
+					player.hand_guitar.transform.basis = Basis(b_x, b_y, b_z).orthonormalized()
+					player.hand_guitar.scale = Vector3(1.15, 1.15, 1.15)
 				
 				# Camera in front of Vader showing upper body, hands, and the guitar
 				test_cam.global_position = Vector3(12.0, 1.25, 3.2)
@@ -52,6 +55,11 @@ func _process(delta: float) -> void:
 				if player.is_holding_guitar:
 					player._toggle_guitar() # holster guitar to back
 				player._play_anim("Idle_Casual")
+				
+				if player.back_guitar:
+					player.back_guitar.position = Vector3(0.04, 0.10, -0.42)
+					player.back_guitar.rotation = Vector3(deg_to_rad(6), deg_to_rad(180), deg_to_rad(-24))
+					player.back_guitar.scale = Vector3(1.15, 1.15, 1.15)
 				
 				# Camera behind Vader looking at the guitar slung diagonally across back
 				test_cam.global_position = Vector3(12.0, 1.35, 7.3)

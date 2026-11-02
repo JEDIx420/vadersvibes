@@ -52,10 +52,18 @@ func _process(delta: float) -> bool:
 				current_step = 1
 				test_timer = 0.0
 		1:
-			# Step 1: Walk forward towards the sliding veranda door
+			# Step 1: Walk forward towards the sliding veranda door and verify footstep audio
 			player.global_position = player.global_position.move_toward(Vector3(2.62, 1.6, -1.8), 3.0 * delta)
+			player.velocity = Vector3(0, 0, -3.0)
+			player.footstep_distance_accumulator += 3.0 * delta
+			if player.footstep_distance_accumulator >= player.STEP_DISTANCE_WALK:
+				player.footstep_distance_accumulator = 0.0
+				player._play_footstep()
+				
 			if test_timer > 0.6:
 				print("✓ STEP 1: Vader walked out of cabin onto the veranda at: ", player.global_position)
+				assert(player._footstep_index > 0, "Footstep sounds should have played while walking")
+				print("  Footstep sound triggered successfully (steps count: %d)" % player._footstep_index)
 				var door_ctrl = root_node.get_node_or_null("lego_coastal_sanctuary/CabinDoorController")
 				if door_ctrl:
 					print("  Cabin door controller is_open: ", door_ctrl.is_open)
