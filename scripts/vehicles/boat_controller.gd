@@ -46,6 +46,9 @@ func _physics_process(delta: float) -> void:
 	if mount_cooldown <= 0 and (Input.is_key_pressed(KEY_E) or Input.is_action_just_pressed("interact")):
 		dismount_boat()
 
+func disembark() -> void:
+	dismount_boat()
+
 func board_boat(p_pilot: VaderPlayer) -> void:
 	is_piloted = true
 	mount_cooldown = 0.5

@@ -7,7 +7,9 @@ func _ready() -> void:
 	if stream and bgm_player:
 		bgm_player.stream = stream
 		bgm_player.play()
-	print("[VaderBedroom] Welcome home to your peaceful sanctuary on Pelagia-Prime.")
+	print("[VaderBedroom] Stepping outside into Pelagia-Prime Sanctuary...")
+	# Seamless transition to the full open world sanctuary
+	get_tree().change_scene_to_file("res://scenes/world/world.tscn")
 
 func _on_exit_door_body_entered(body: Node3D) -> void:
 	if body.is_in_group("player"):

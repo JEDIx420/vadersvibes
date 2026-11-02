@@ -68,5 +68,5 @@ func transition_to_bedroom() -> void:
 	if audio_player:
 		tween.tween_property(audio_player, "volume_db", -35.0, 0.8)
 	tween.tween_callback(func():
-		get_tree().change_scene_to_file("res://scenes/rooms/vaders_bedroom.tscn")
+		get_tree().change_scene_to_file("res://scenes/world/world.tscn")
 	)

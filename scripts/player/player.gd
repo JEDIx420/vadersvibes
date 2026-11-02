@@ -81,9 +81,9 @@ func _setup_bone_attachments() -> void:
 		attach_back.bone_name = "Socket_Back"
 		skeleton.add_child(attach_back)
 		back_guitar.reparent(attach_back)
-		back_guitar.position = Vector3(0.0, 0.0, 0.22)
-		back_guitar.rotation = Vector3(0, 0, deg_to_rad(-45))
-		back_guitar.scale = Vector3(1.0, 1.0, 1.0)
+		back_guitar.position = Vector3(0.0, 0.04, 0.25)
+		back_guitar.rotation = Vector3(deg_to_rad(8), deg_to_rad(180), deg_to_rad(-48))
+		back_guitar.scale = Vector3(1.2, 1.2, 1.2)
 		
 	# 4. Acoustic Guitar Hand (Equipped across chest for strumming)
 	var bone_torso = skeleton.find_bone("Torso")
@@ -93,9 +93,9 @@ func _setup_bone_attachments() -> void:
 		attach_guitar.bone_name = "Torso"
 		skeleton.add_child(attach_guitar)
 		hand_guitar.reparent(attach_guitar)
-		hand_guitar.position = Vector3(0.0, -0.05, -0.32)
-		hand_guitar.rotation = Vector3(deg_to_rad(15), deg_to_rad(180), deg_to_rad(-25))
-		hand_guitar.scale = Vector3(1.0, 1.0, 1.0)
+		hand_guitar.position = Vector3(0.02, 0.10, 0.30)
+		hand_guitar.rotation = Vector3(deg_to_rad(10), 0, deg_to_rad(45))
+		hand_guitar.scale = Vector3(1.2, 1.2, 1.2)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") or (event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE):
@@ -214,30 +214,82 @@ func _process_on_foot(delta: float) -> void:
 			
 	move_and_slide()
 
+func _get_nearby_interactions() -> Array[Dictionary]:
+	var results: Array[Dictionary] = []
+	if not is_inside_tree() or not get_tree():
+		return results
+		
+	# Vehicles
+	for v in get_tree().get_nodes_in_group("vehicles"):
+		var d = global_position.distance_to(v.global_position)
+		if d < 3.8 and v.has_method("mount"):
+			results.append({
+				"dist": d,
+				"prompt": "[E] Mount 74-Z Speeder Bike",
+				"action": func(): v.mount(self)
+			})
+			
+	# Boats
+	for b in get_tree().get_nodes_in_group("boats"):
+		var d = global_position.distance_to(b.global_position)
+		if d < 4.5 and b.has_method("board_boat"):
+			results.append({
+				"dist": d,
+				"prompt": "[E] Board Coastal Skiff",
+				"action": func(): b.board_boat(self)
+			})
+			
+	# Spacecraft
+	for s in get_tree().get_nodes_in_group("spacecraft"):
+		var d = global_position.distance_to(s.global_position)
+		if d < 6.0 and s.has_method("board_ship"):
+			results.append({
+				"dist": d,
+				"prompt": "[E] Pilot Starship Shuttle",
+				"action": func(): s.board_ship(self)
+			})
+			
+	# Villagers
+	for vi in get_tree().get_nodes_in_group("villagers"):
+		var d = global_position.distance_to(vi.global_position)
+		if d < 3.2 and vi.has_method("interact"):
+			var v_name = vi.get("villager_name") if vi.get("villager_name") else "Neighbor"
+			var v_role = vi.get("role") if vi.get("role") else "Villager"
+			results.append({
+				"dist": d,
+				"prompt": "[E] Talk to %s (%s)" % [v_name, v_role],
+				"action": func(): vi.interact(self)
+			})
+			
+	# Creatures
+	for c in get_tree().get_nodes_in_group("creatures"):
+		if c is CreatureBase and not c.is_pacified:
+			var d = global_position.distance_to(c.global_position)
+			if d < 6.0:
+				results.append({
+					"dist": d,
+					"prompt": "[E] Use Force Calm on %s | [F] Lightsaber" % c.creature_name,
+					"action": func():
+						c.pacify_creature()
+						_play_sfx("res://assets/audio/sfx/lego_snap.wav")
+						if clean_hud:
+							clean_hud.show_interaction_prompt("✨ Vader used the Force to pacify the %s peacefully!" % c.creature_name)
+				})
+				
+	results.sort_custom(func(a, b): return a["dist"] < b["dist"])
+	return results
+
 func _update_proximity_hud() -> void:
 	if not clean_hud:
 		return
 		
-	var vehicles = get_tree().get_nodes_in_group("vehicles") if (is_inside_tree() and get_tree()) else []
-	for v in vehicles:
-		if global_position.distance_to(v.global_position) < 3.8:
-			clean_hud.show_interaction_prompt("[E] Mount 74-Z Speeder Bike")
-			return
-			
-	var boats = get_tree().get_nodes_in_group("boats") if (is_inside_tree() and get_tree()) else []
-	for b in boats:
-		if global_position.distance_to(b.global_position) < 4.5:
-			clean_hud.show_interaction_prompt("[E] Board Coastal Skiff")
-			return
-			
-	var ships = get_tree().get_nodes_in_group("spacecraft") if (is_inside_tree() and get_tree()) else []
-	for s in ships:
-		if global_position.distance_to(s.global_position) < 6.0:
-			clean_hud.show_interaction_prompt("[E] Pilot Starship Shuttle")
-			return
+	var nearby = _get_nearby_interactions()
+	if nearby.size() > 0:
+		clean_hud.show_interaction_prompt(nearby[0]["prompt"])
+		return
 			
 	# Check if near coastline/dock for fishing
-	if global_position.x < -30.0 and global_position.y < 2.5:
+	if global_position.x < -20.0 and global_position.y < 2.5:
 		clean_hud.show_interaction_prompt("[C] Cast Fishing Line into Crystal Waters")
 		return
 		
@@ -250,27 +302,9 @@ func _process_riding_vehicle(_delta: float, pose_anim: String) -> void:
 		_play_anim(pose_anim)
 
 func _check_context_interaction() -> void:
-	# Find nearest vehicle within 4.0m
-	var vehicles = get_tree().get_nodes_in_group("vehicles") if (is_inside_tree() and get_tree()) else []
-	for v in vehicles:
-		if global_position.distance_to(v.global_position) < 4.0:
-			if v.has_method("mount"):
-				v.mount(self)
-				return
-				
-	var boats = get_tree().get_nodes_in_group("boats") if (is_inside_tree() and get_tree()) else []
-	for b in boats:
-		if global_position.distance_to(b.global_position) < 4.5:
-			if b.has_method("board_boat"):
-				b.board_boat(self)
-				return
-				
-	var ships = get_tree().get_nodes_in_group("spacecraft") if (is_inside_tree() and get_tree()) else []
-	for s in ships:
-		if global_position.distance_to(s.global_position) < 6.0:
-			if s.has_method("board_ship"):
-				s.board_ship(self)
-				return
+	var nearby = _get_nearby_interactions()
+	if nearby.size() > 0:
+		nearby[0]["action"].call()
 
 func _try_fishing() -> void:
 	if global_position.x < -25.0:

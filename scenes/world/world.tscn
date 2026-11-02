@@ -1,4 +1,4 @@
-[gd_scene load_steps=37 format=3 uid="uid://dworld001open"]
+[gd_scene load_steps=42 format=3 uid="uid://dworld001open"]
 
 [ext_resource type="Script" path="res://scenes/world/world.gd" id="1_world"]
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="2_player"]
@@ -30,6 +30,10 @@
 [ext_resource type="Texture2D" path="res://assets/textures/lego_stud_roughness.png" id="28_stud_rough"]
 [ext_resource type="PackedScene" path="res://assets/test_pipeline/lego_coastal_sanctuary.glb" id="29_sanctuary"]
 [ext_resource type="Script" path="res://scripts/interactions/cabin_door_controller.gd" id="30_door_ctrl"]
+[ext_resource type="PackedScene" path="res://assets/characters/villagers/villager_fisherman.glb" id="31_v_fish"]
+[ext_resource type="PackedScene" path="res://assets/characters/villagers/villager_mechanic.glb" id="32_v_mech"]
+[ext_resource type="PackedScene" path="res://assets/characters/villagers/villager_elder.glb" id="33_v_elder"]
+[ext_resource type="Script" path="res://scripts/interactions/villager_npc.gd" id="34_v_script"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMat_pelagia"]
 sky_top_color = Color(0.22, 0.48, 0.88, 1)
@@ -79,6 +83,10 @@ specular = 0.75
 
 [sub_resource type="BoxShape3D" id="BoxShape_creature_col"]
 size = Vector3(1.2, 1.2, 2.0)
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape_villager"]
+radius = 0.35
+height = 1.6
 
 [node name="World" type="Node3D"]
 script = ExtResource("1_world")
@@ -253,3 +261,48 @@ script = ExtResource("9_defense")
 [node name="BGMPlayer" type="AudioStreamPlayer" parent="."]
 volume_db = -6.0
 autoplay = true
+
+[node name="Villager_Barnaby" type="CharacterBody3D" parent="."]
+transform = Transform3D(0.707107, 0, 0.707107, 0, 1, 0, -0.707107, 0, 0.707107, -6.2, 0.35, 4.2)
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("34_v_script")
+villager_name = "Barnaby"
+role = "Pelagian Fisherman"
+dialogues = ["Welcome to the coast, Vader! The waters are crystal clear and peaceful today. Press [C] to fish!", "I hear you left the Empire behind. Best decision in the galaxy. Here, life is simple and sweet.", "Whenever you want to take the skiff boat out, she's fueled and ready. Press [E] to board!"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Villager_Barnaby"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+shape = SubResource("CapsuleShape_villager")
+
+[node name="Model" parent="Villager_Barnaby" instance=ExtResource("31_v_fish")]
+
+[node name="Villager_Jax" type="CharacterBody3D" parent="."]
+transform = Transform3D(0.5, 0, -0.866025, 0, 1, 0, 0.866025, 0, 0.5, -2.0, 0.35, -3.2)
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("34_v_script")
+villager_name = "Jax"
+role = "Speeder Mechanic"
+dialogues = ["Hey Vader! Just finished fine-tuning the 74-Z's repulsor lift. She glides like a dream! Press [E] to mount.", "Hold [Shift] while riding for repulsor boost. Nothing beats racing across the Pelagian coastline!", "No blasters needed here—only high-speed joyrides and scenic views."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Villager_Jax"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+shape = SubResource("CapsuleShape_villager")
+
+[node name="Model" parent="Villager_Jax" instance=ExtResource("32_v_mech")]
+
+[node name="Villager_Corin" type="CharacterBody3D" parent="VillageSanctuary"]
+transform = Transform3D(0.965926, 0, -0.258819, 0, 1, 0, 0.258819, 0, 0.965926, 2.2, 0.2, 1.2)
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("34_v_script")
+villager_name = "Corin"
+role = "Village Elder & Songkeeper"
+dialogues = ["Greetings, traveler of stars. We are honored to have you dwell with us in peace.", "Music is the true language of the Force. Press [G] to equip your acoustic guitar, and [1-6] to strum chords!", "Whenever wild beasts wander in from the savannah, we know our friend Vader will protect us peacefully."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="VillageSanctuary/Villager_Corin"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+shape = SubResource("CapsuleShape_villager")
+
+[node name="Model" parent="VillageSanctuary/Villager_Corin" instance=ExtResource("33_v_elder")]
